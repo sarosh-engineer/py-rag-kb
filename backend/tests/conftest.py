@@ -2,7 +2,14 @@
 
 Each test gets its own application instance. The module-level ``app`` in
 ``app.main`` is only the object Uvicorn imports.
+
+``APP_ENV`` is forced to ``test`` before the application is imported so the
+default suite uses in-memory stores and never contacts MongoDB or S3.
 """
+
+import os
+
+os.environ["APP_ENV"] = "test"
 
 import pytest
 from fastapi.testclient import TestClient

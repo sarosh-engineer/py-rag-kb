@@ -24,6 +24,13 @@ def test_declared_defaults_are_local_and_closed() -> None:
         "access_token_expire_minutes": 30,
         "bootstrap_admin_email": "",
         "bootstrap_admin_password": "",
+        "mongodb_uri": "",
+        "mongodb_database": "genai_rag",
+        "aws_region": "",
+        "aws_access_key_id": "",
+        "aws_secret_access_key": "",
+        "s3_bucket_name": "",
+        "max_upload_bytes": 10 * 1024 * 1024,
     }
 
 

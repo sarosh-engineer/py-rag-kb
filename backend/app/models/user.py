@@ -32,3 +32,4 @@ class User(BaseModel):
     role: Role
     is_active: bool = True
     created_at: datetime = Field(description="UTC timestamp.")
+    updated_at: datetime = Field(description="UTC timestamp of the last account change.")

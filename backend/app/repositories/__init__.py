@@ -1,5 +1,5 @@
 """Database and object-storage access.
 
-Phase 2 includes a temporary in-memory user repository. MongoDB and S3 are
-not implemented.
+MongoDB repositories and the S3 storage class are the running implementation.
+In-memory classes are the test doubles used when APP_ENV=test.
 """

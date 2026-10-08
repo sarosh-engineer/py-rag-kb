@@ -57,8 +57,8 @@ The token does not contain the email, the password, or the password hash.
 | `GET /protected/admin` | yes | no | no |
 | List users and change roles | yes | no | no |
 | Future chat and authorized document read | yes | yes | yes |
-| Future document upload | yes | yes | no |
-| Future document delete | yes | no | no |
+| Upload a document | yes | yes | no |
+| Delete a document | yes | no | no |
 
 `/protected/*` routes are demonstrations. They can be removed when real chat and document routes exist.
 
@@ -66,7 +66,7 @@ Public `POST /auth/register` always creates an active viewer. The body has no ro
 
 ## Persistence
 
-`UserRepository` is the storage contract. `InMemoryUserRepository` implements it for this phase. It is process-local and loses every account on restart. `create_app` constructs it and stores it on `app.state`. A later MongoDB class can implement the same methods and be constructed in that one place. User ids are strings so the API does not depend on MongoDB `ObjectId`.
+`UserRepository` is the storage contract. `MongoUserRepository` implements it for every environment except `test`. `InMemoryUserRepository` remains the test double. `create_app` chooses the implementation and stores it on `app.state`. User ids are strings so the API does not depend on MongoDB `ObjectId`. See [storage](storage.md).
 
 ## Document authorization later
 

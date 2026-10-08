@@ -34,6 +34,7 @@ _SECRET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         r"\1\2 [REDACTED]",
     ),
     (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "[REDACTED]"),
+    (re.compile(r"mongodb(?:\+srv)?://\S+", re.IGNORECASE), "[REDACTED]"),
 )
 
 # Fields copied from LogRecord extras into the JSON line. Query strings are

@@ -15,6 +15,7 @@ class UserPublic(BaseModel):
     role: Role
     is_active: bool
     created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def from_user(cls, user: User) -> "UserPublic":
@@ -24,6 +25,7 @@ class UserPublic(BaseModel):
             role=user.role,
             is_active=user.is_active,
             created_at=user.created_at,
+            updated_at=user.updated_at,
         )
 
 

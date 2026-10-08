@@ -1,5 +1,7 @@
 """Backend role checks. These requests bypass any future user interface."""
 
+import asyncio
+
 from fastapi.testclient import TestClient
 
 from app.models.user import Role
@@ -54,12 +56,13 @@ def test_viewer_cannot_manage_users(client: TestClient) -> None:
 
     assert listing.status_code == 403
     assert change.status_code == 403
-    assert client.app.state.user_repository.get_by_email(VIEWER_EMAIL).role is Role.VIEWER
+    stored = asyncio.run(client.app.state.user_repository.get_by_email(VIEWER_EMAIL))
+    assert stored.role is Role.VIEWER
 
 
 def test_editor_cannot_manage_users(client: TestClient) -> None:
     tokens = _tokens(client)
-    editor = client.app.state.user_repository.get_by_email(EDITOR_EMAIL)
+    editor = asyncio.run(client.app.state.user_repository.get_by_email(EDITOR_EMAIL))
 
     listing = client.get("/users", headers=bearer(tokens["editor"]))
     change = client.patch(
@@ -75,7 +78,7 @@ def test_editor_cannot_manage_users(client: TestClient) -> None:
 
 def test_admin_can_change_another_users_role(client: TestClient) -> None:
     tokens = _tokens(client)
-    viewer = client.app.state.user_repository.get_by_email(VIEWER_EMAIL)
+    viewer = asyncio.run(client.app.state.user_repository.get_by_email(VIEWER_EMAIL))
 
     response = client.patch(
         f"/users/{viewer.id}",
@@ -94,7 +97,7 @@ def test_admin_can_change_another_users_role(client: TestClient) -> None:
 
 def test_admin_cannot_remove_their_own_access(client: TestClient) -> None:
     tokens = _tokens(client)
-    admin = client.app.state.user_repository.get_by_email(ADMIN_EMAIL)
+    admin = asyncio.run(client.app.state.user_repository.get_by_email(ADMIN_EMAIL))
 
     demote = client.patch(
         f"/users/{admin.id}",
@@ -110,12 +113,12 @@ def test_admin_cannot_remove_their_own_access(client: TestClient) -> None:
     assert demote.status_code == 400
     assert demote.json()["error"]["code"] == "cannot_change_self"
     assert disable.status_code == 400
-    assert client.app.state.user_repository.get_by_id(admin.id).role is Role.ADMIN
+    assert asyncio.run(client.app.state.user_repository.get_by_id(admin.id)).role is Role.ADMIN
 
 
 def test_disabled_token_stops_working(client: TestClient) -> None:
     tokens = _tokens(client)
-    viewer = client.app.state.user_repository.get_by_email(VIEWER_EMAIL)
+    viewer = asyncio.run(client.app.state.user_repository.get_by_email(VIEWER_EMAIL))
 
     disabled = client.patch(
         f"/users/{viewer.id}",
@@ -146,8 +149,10 @@ def _tokens(client: TestClient) -> dict[str, str]:
     admin = register(client, ADMIN_EMAIL, ADMIN_PASSWORD)
     # Public registration cannot create an admin. Tests seed that one row
     # through the repository, which is the same boundary a migration would use.
-    stored_admin = client.app.state.user_repository.get_by_id(admin["id"])
-    client.app.state.user_repository.update(stored_admin.model_copy(update={"role": Role.ADMIN}))
+    stored_admin = asyncio.run(client.app.state.user_repository.get_by_id(admin["id"]))
+    asyncio.run(
+        client.app.state.user_repository.update(stored_admin.model_copy(update={"role": Role.ADMIN}))
+    )
     admin_token = login(client, ADMIN_EMAIL, ADMIN_PASSWORD)["access_token"]
     promote(client, editor["id"], Role.EDITOR, admin_token)
     return {

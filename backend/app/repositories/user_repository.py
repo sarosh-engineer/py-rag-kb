@@ -1,8 +1,8 @@
 """User persistence contract.
 
-Routes and services depend on this protocol. ``InMemoryUserRepository`` is
-the Phase 2 implementation. A MongoDB repository can replace it later by
-implementing the same methods.
+Routes and services depend on this protocol. ``MongoUserRepository`` is the
+running application's store. ``InMemoryUserRepository`` remains the test
+double so the default suite does not need Atlas.
 """
 
 from typing import Protocol, runtime_checkable
@@ -22,17 +22,20 @@ class UserNotFoundError(Exception):
 class UserRepository(Protocol):
     """Storage operations authentication needs. No HTTP types."""
 
-    def get_by_id(self, user_id: str) -> User | None:
+    async def ensure_indexes(self) -> None:
+        """Create indexes. Implementations must not drop existing data."""
+
+    async def get_by_id(self, user_id: str) -> User | None:
         """Return the user or ``None``."""
 
-    def get_by_email(self, email: str) -> User | None:
+    async def get_by_email(self, email: str) -> User | None:
         """Return the user for a normalized email, or ``None``."""
 
-    def add(self, user: User) -> User:
+    async def add(self, user: User) -> User:
         """Insert ``user``. Raise ``DuplicateUserError`` if the email exists."""
 
-    def update(self, user: User) -> User:
+    async def update(self, user: User) -> User:
         """Replace the stored user. Raise ``UserNotFoundError`` if the id is new."""
 
-    def list_users(self) -> list[User]:
+    async def list_users(self) -> list[User]:
         """Return every user, oldest first."""

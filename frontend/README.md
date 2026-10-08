@@ -1,6 +1,6 @@
 # Frontend
 
-The Angular client is not part of Phase 2.
+The Angular client is not part of this phase.
 
 When it is added, login will be:
 

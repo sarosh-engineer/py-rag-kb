@@ -76,8 +76,15 @@ def test_unlisted_origin_is_not_reflected(client: TestClient) -> None:
 
 
 def test_openapi_is_hidden_in_production() -> None:
+    from app.repositories.in_memory_document_repository import InMemoryDocumentRepository
+    from app.repositories.in_memory_user_repository import InMemoryUserRepository
+    from app.storage.in_memory_object_storage import InMemoryObjectStorage
+
     application = create_app(
-        Settings(app_env="production", log_level="WARNING", jwt_secret_key="p" * 32)
+        Settings(app_env="production", log_level="WARNING", jwt_secret_key="p" * 32),
+        user_repository=InMemoryUserRepository(),
+        document_repository=InMemoryDocumentRepository(),
+        object_storage=InMemoryObjectStorage(),
     )
 
     with TestClient(application) as test_client:

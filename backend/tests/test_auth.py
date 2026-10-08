@@ -1,5 +1,7 @@
 """Registration, login, and the current-user route."""
 
+import asyncio
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -26,7 +28,7 @@ def test_register_creates_an_active_viewer(client: TestClient) -> None:
     assert body["id"]
     assert "password" not in body
     assert "password_hash" not in body
-    stored = client.app.state.user_repository.get_by_email(VIEWER_EMAIL)
+    stored = asyncio.run(client.app.state.user_repository.get_by_email(VIEWER_EMAIL))
     assert stored is not None
     assert stored.password_hash != VIEWER_PASSWORD
     assert stored.password_hash.startswith("$argon2")
@@ -51,7 +53,7 @@ def test_register_rejects_a_role_field(client: TestClient) -> None:
     )
 
     assert response.status_code == 422
-    assert client.app.state.user_repository.get_by_email(VIEWER_EMAIL) is None
+    assert asyncio.run(client.app.state.user_repository.get_by_email(VIEWER_EMAIL)) is None
     assert "password_hash" not in response.text
 
 
@@ -192,15 +194,19 @@ def _admin_token(client: TestClient) -> str:
     from app.security.password import hash_password
 
     repository = client.app.state.user_repository
-    if repository.get_by_email(ADMIN_EMAIL) is None:
-        repository.add(
-            User(
-                id=uuid4().hex,
-                email=ADMIN_EMAIL,
-                password_hash=hash_password(ADMIN_PASSWORD),
-                role=Role.ADMIN,
-                is_active=True,
-                created_at=datetime.now(UTC),
+    if asyncio.run(repository.get_by_email(ADMIN_EMAIL)) is None:
+        now = datetime.now(UTC)
+        asyncio.run(
+            repository.add(
+                User(
+                    id=uuid4().hex,
+                    email=ADMIN_EMAIL,
+                    password_hash=hash_password(ADMIN_PASSWORD),
+                    role=Role.ADMIN,
+                    is_active=True,
+                    created_at=now,
+                    updated_at=now,
+                )
             )
         )
     return login(client, ADMIN_EMAIL, ADMIN_PASSWORD)["access_token"]

@@ -1,5 +1,5 @@
-# Phase 1 API image. It contains only the FastAPI process.
-# AWS, MongoDB, and the frontend are intentionally not included.
+# API image. Pass MongoDB, S3, and JWT settings at runtime.
+# This file does not copy .env, and the image does not contain credentials.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

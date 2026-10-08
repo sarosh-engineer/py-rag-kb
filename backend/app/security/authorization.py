@@ -16,6 +16,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.dependencies import SettingsDep
 from app.errors import AppError
 from app.models.user import Role, User
+from app.repositories.errors import RepositoryUnavailable
 from app.repositories.user_repository import UserRepository
 from app.security.jwt import authentication_required, read_access_token
 
@@ -36,7 +37,7 @@ def get_user_repository(request: Request) -> UserRepository:
 UserRepositoryDep = Annotated[UserRepository, Depends(get_user_repository)]
 
 
-def get_current_user(
+async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     settings: SettingsDep,
     users: UserRepositoryDep,
@@ -44,12 +45,22 @@ def get_current_user(
     """Load the active user identified by the bearer token.
 
     The repository role is authoritative. A role claim left over from before
-    an admin change does not grant the old permission.
+    an admin change does not grant the old permission. The extra indexed read
+    is the cost of making disablement and demotion take effect immediately.
+    Trusting the claim alone would skip the database and leave a disabled
+    account active until the token expired.
     """
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise authentication_required()
     user_id, _role_claim = read_access_token(credentials.credentials, settings)
-    user = users.get_by_id(user_id)
+    try:
+        user = await users.get_by_id(user_id)
+    except RepositoryUnavailable:
+        raise AppError(
+            "The account store is unavailable.",
+            status_code=503,
+            code="store_unavailable",
+        ) from None
     if user is None or not user.is_active:
         raise authentication_required()
     return user

@@ -24,7 +24,7 @@ def get_auth_service(settings: Settings, users: UserRepositoryDep) -> AuthServic
     responses=error_responses(409, 422, 503),
     summary="Register a viewer account",
 )
-def register(
+async def register(
     body: RegisterRequest,
     settings: SettingsDep,
     users: UserRepositoryDep,
@@ -33,7 +33,7 @@ def register(
 
     A token is not returned. The client signs in with ``POST /auth/login``.
     """
-    user = get_auth_service(settings, users).register(body.email, body.password)
+    user = await get_auth_service(settings, users).register(body.email, body.password)
     return UserPublic.from_user(user)
 
 
@@ -43,14 +43,14 @@ def register(
     responses=error_responses(401, 422, 503),
     summary="Exchange credentials for an access token",
 )
-def login(
+async def login(
     body: LoginRequest,
     settings: SettingsDep,
     users: UserRepositoryDep,
 ) -> TokenResponse:
     """Return a bearer token. Failures use one message for every credential error."""
     service = get_auth_service(settings, users)
-    user = service.authenticate(body.email, body.password)
+    user = await service.authenticate(body.email, body.password)
     return TokenResponse(
         access_token=service.issue_token(user),
         expires_in=settings.access_token_expire_minutes * 60,

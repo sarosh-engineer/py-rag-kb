@@ -50,6 +50,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = Field(default=30, ge=5, le=1440)
     bootstrap_admin_email: str = ""
     bootstrap_admin_password: str = ""
+    mongodb_uri: str = ""
+    mongodb_database: str = "genai_rag"
+    aws_region: str = ""
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
+    s3_bucket_name: str = ""
+    max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1)
 
     @field_validator("app_env", mode="before")
     @classmethod
@@ -137,6 +144,29 @@ class Settings(BaseSettings):
             raise RuntimeError(
                 "Bootstrap admin requires JWT_SECRET_KEY of at least 32 characters."
             )
+
+    def storage_configuration_error(self) -> str | None:
+        """Return a static configuration error, or ``None`` when storage can start.
+
+        The message names missing variables and never includes their values.
+        """
+        if self.mongodb_uri and not self.mongodb_uri.startswith(("mongodb://", "mongodb+srv://")):
+            return "MONGODB_URI is invalid."
+        missing = [
+            name
+            for name, present in (
+                ("MONGODB_URI", bool(self.mongodb_uri)),
+                ("MONGODB_DATABASE", bool(self.mongodb_database)),
+                ("AWS_REGION", bool(self.aws_region)),
+                ("AWS_ACCESS_KEY_ID", bool(self.aws_access_key_id)),
+                ("AWS_SECRET_ACCESS_KEY", bool(self.aws_secret_access_key)),
+                ("S3_BUCKET_NAME", bool(self.s3_bucket_name)),
+            )
+            if not present
+        ]
+        if missing:
+            return "Missing required configuration: " + ", ".join(missing) + "."
+        return None
 
 
 @lru_cache

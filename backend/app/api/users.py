@@ -18,9 +18,9 @@ router = APIRouter(prefix="/users", tags=["users"])
     responses=error_responses(401, 403),
     summary="List accounts",
 )
-def list_users(_actor: AdminDep, users: UserRepositoryDep) -> list[UserPublic]:
+async def list_users(_actor: AdminDep, users: UserRepositoryDep) -> list[UserPublic]:
     """Return every account. Admin only. Password hashes are not included."""
-    return [UserPublic.from_user(user) for user in users.list_users()]
+    return [UserPublic.from_user(user) for user in await users.list_users()]
 
 
 @router.patch(
@@ -29,7 +29,7 @@ def list_users(_actor: AdminDep, users: UserRepositoryDep) -> list[UserPublic]:
     responses=error_responses(400, 401, 403, 404, 422),
     summary="Change a role or active flag",
 )
-def update_user(
+async def update_user(
     user_id: str,
     body: UserUpdate,
     actor: AdminDep,
@@ -43,7 +43,7 @@ def update_user(
             status_code=422,
             code="validation_error",
         )
-    updated = AuthService(users, settings).update_user(
+    updated = await AuthService(users, settings).update_user(
         actor,
         user_id,
         role=body.role,
