@@ -1,0 +1,13 @@
+# Runtime dependencies for the Phase 1 API process.
+# Development-only tools live in requirements-dev.txt.
+fastapi==0.142.4
+uvicorn[standard]==0.54.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+python-dotenv==1.2.4
+pwdlib[argon2]==0.3.1
+PyJWT==2.15.1
+email-validator==2.3.0
+pymongo==4.18.2
+boto3==1.43.109
+python-multipart==0.0.32

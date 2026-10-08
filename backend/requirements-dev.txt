@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest==9.1.1
+# Starlette 1.7 TestClient uses httpx2. The httpx 0.28 client is deprecated there.
+httpx2==2.13.1

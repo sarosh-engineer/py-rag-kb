@@ -1,0 +1,37 @@
+"""Shared fixtures.
+
+Each test gets its own application instance. The module-level ``app`` in
+``app.main`` is only the object Uvicorn imports.
+
+``APP_ENV`` is forced to ``test`` before the application is imported so the
+default suite uses in-memory stores and never contacts MongoDB or S3.
+"""
+
+import os
+
+os.environ["APP_ENV"] = "test"
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.config import Settings
+from app.main import create_app
+from tests.auth_helpers import TEST_JWT_SECRET
+
+
+@pytest.fixture
+def settings() -> Settings:
+    return Settings(
+        app_env="test",
+        log_level="WARNING",
+        log_json=True,
+        cors_allowed_origins="",
+        jwt_secret_key=TEST_JWT_SECRET,
+    )
+
+
+@pytest.fixture
+def client(settings: Settings) -> TestClient:
+    application = create_app(settings)
+    with TestClient(application) as test_client:
+        yield test_client

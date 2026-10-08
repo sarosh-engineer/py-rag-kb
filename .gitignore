@@ -1,0 +1,31 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+
+# Future frontend
+node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Logs
+*.log
