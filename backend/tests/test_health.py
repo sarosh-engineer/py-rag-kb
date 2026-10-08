@@ -76,7 +76,9 @@ def test_unlisted_origin_is_not_reflected(client: TestClient) -> None:
 
 
 def test_openapi_is_hidden_in_production() -> None:
-    application = create_app(Settings(app_env="production", log_level="WARNING"))
+    application = create_app(
+        Settings(app_env="production", log_level="WARNING", jwt_secret_key="p" * 32)
+    )
 
     with TestClient(application) as test_client:
         assert test_client.get("/docs").status_code == 404

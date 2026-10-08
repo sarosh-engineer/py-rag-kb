@@ -11,7 +11,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.auth import router as auth_router
 from app.api.health import router as health_router
+from app.api.protected import router as protected_router
+from app.api.users import router as users_router
 from app.config import Settings, load_settings
 from app.errors import (
     AppError,
@@ -22,16 +25,19 @@ from app.errors import (
 )
 from app.logging_config import configure_logging
 from app.middleware import RequestContextMiddleware
+from app.repositories.in_memory_user_repository import InMemoryUserRepository
+from app.services.auth_service import AuthService
 
-# Methods and headers the browser is allowed to send. Phase 1 only serves
-# GET /health. Later phases must extend these lists when they add routes.
-_ALLOWED_METHODS = ["GET", "OPTIONS"]
-_ALLOWED_HEADERS = ["Content-Type", "X-Request-ID"]
+# Browser allowlist for the routes that exist now. Extend it when a later
+# phase adds PUT, DELETE, or another request header.
+_ALLOWED_METHODS = ["GET", "POST", "PATCH", "OPTIONS"]
+_ALLOWED_HEADERS = ["Authorization", "Content-Type", "X-Request-ID"]
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Create the API application for the supplied settings."""
     resolved = settings or load_settings()
+    resolved.validate_runtime()
     configure_logging(resolved)
 
     docs_url = None if resolved.is_production else "/docs"
@@ -46,6 +52,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url=openapi_url,
     )
     app.state.settings = resolved
+    user_repository = InMemoryUserRepository()
+    AuthService(user_repository, resolved).ensure_bootstrap_admin()
+    app.state.user_repository = user_repository
 
     # Added last so it is the outermost middleware and sees every response.
     app.add_middleware(
@@ -58,6 +67,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(RequestContextMiddleware)
 
     app.include_router(health_router)
+    app.include_router(auth_router)
+    app.include_router(users_router)
+    app.include_router(protected_router)
     app.add_exception_handler(AppError, app_error_handler)
     # FastAPI's HTTPException subclasses Starlette's. Routing 404s use the
     # Starlette class, so the handler has to be registered on that class.

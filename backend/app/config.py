@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = Field(default=8000, ge=1, le=65535)
     cors_allowed_origins: str = ""
+    jwt_secret_key: str = ""
+    jwt_algorithm: Literal["HS256", "HS384", "HS512"] = "HS256"
+    access_token_expire_minutes: int = Field(default=30, ge=5, le=1440)
+    bootstrap_admin_email: str = ""
+    bootstrap_admin_password: str = ""
 
     @field_validator("app_env", mode="before")
     @classmethod
@@ -59,6 +64,23 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return value.strip().upper()
         return value
+
+    @field_validator("jwt_algorithm", mode="before")
+    @classmethod
+    def normalize_jwt_algorithm(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip().upper()
+        return value
+
+    @field_validator("jwt_secret_key", "bootstrap_admin_email", "bootstrap_admin_password")
+    @classmethod
+    def strip_secret_fields(cls, value: str) -> str:
+        return value.strip()
+
+    @field_validator("bootstrap_admin_email")
+    @classmethod
+    def normalize_bootstrap_email(cls, value: str) -> str:
+        return value.lower()
 
     @field_validator("cors_allowed_origins")
     @classmethod
@@ -89,6 +111,32 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"
+
+    @property
+    def auth_is_configured(self) -> bool:
+        """True when the signing key is long enough to use."""
+        return len(self.jwt_secret_key) >= 32
+
+    def validate_runtime(self) -> None:
+        """Reject combinations that must not boot.
+
+        Local and test processes may start without a JWT secret so ``/health``
+        still works. Production may not. Bootstrap admin settings are all-or-nothing.
+        """
+        if self.is_production and not self.auth_is_configured:
+            raise RuntimeError(
+                "JWT_SECRET_KEY must be at least 32 characters when APP_ENV=production."
+            )
+        has_email = bool(self.bootstrap_admin_email)
+        has_password = bool(self.bootstrap_admin_password)
+        if has_email != has_password:
+            raise RuntimeError(
+                "Set both BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD, or neither."
+            )
+        if has_password and not self.auth_is_configured:
+            raise RuntimeError(
+                "Bootstrap admin requires JWT_SECRET_KEY of at least 32 characters."
+            )
 
 
 @lru_cache

@@ -1,5 +1,7 @@
 # Phase 1 design
 
+Phase 2 adds authentication on top of this process. See [authentication](authentication.md). This document describes the original process shell.
+
 ## What was built
 
 The backend is an application factory, `create_app`. Uvicorn serves the object created at import time. Tests build another instance with an explicit `Settings` object, so a developer machine's environment does not decide the test result.

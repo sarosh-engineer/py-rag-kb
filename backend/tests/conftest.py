@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from tests.auth_helpers import TEST_JWT_SECRET
 
 
 @pytest.fixture
@@ -18,6 +19,7 @@ def settings() -> Settings:
         log_level="WARNING",
         log_json=True,
         cors_allowed_origins="",
+        jwt_secret_key=TEST_JWT_SECRET,
     )
 
 

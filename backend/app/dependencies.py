@@ -1,7 +1,8 @@
 """FastAPI dependencies shared by route modules.
 
-Routes depend on functions defined here so tests can override them and so
-authorization checks, added in a later phase, have one obvious home.
+Settings stay here. Authentication and role checks live in
+``app.security.authorization`` so token parsing is not mixed with generic
+application wiring.
 """
 
 from typing import Annotated

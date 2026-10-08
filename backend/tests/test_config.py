@@ -19,6 +19,11 @@ def test_declared_defaults_are_local_and_closed() -> None:
         "host": "127.0.0.1",
         "port": 8000,
         "cors_allowed_origins": "",
+        "jwt_secret_key": "",
+        "jwt_algorithm": "HS256",
+        "access_token_expire_minutes": 30,
+        "bootstrap_admin_email": "",
+        "bootstrap_admin_password": "",
     }
 
 

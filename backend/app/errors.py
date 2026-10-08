@@ -23,11 +23,19 @@ logger = logging.getLogger("app.errors")
 class AppError(Exception):
     """Expected application failure with a safe client message."""
 
-    def __init__(self, message: str, *, status_code: int = 400, code: str = "bad_request") -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int = 400,
+        code: str = "bad_request",
+        headers: dict[str, str] | None = None,
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.status_code = status_code
         self.code = code
+        self.headers = headers
 
 
 def request_id_from(request: Request) -> str:
@@ -88,6 +96,7 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         code=exc.code,
         message=exc.message,
         request_id=request_id_from(request),
+        headers=exc.headers,
     )
 
 

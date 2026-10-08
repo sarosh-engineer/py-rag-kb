@@ -1,5 +1,5 @@
-"""Persistence models.
+"""Persistence models."""
 
-Phase 1 has no database. User, document, and conversation models will be
-added with MongoDB Atlas.
-"""
+from app.models.user import Role, User
+
+__all__ = ["Role", "User"]

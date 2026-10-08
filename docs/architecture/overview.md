@@ -1,6 +1,6 @@
 # Architecture overview
 
-The target system is one modular backend and one Angular client. Phase 1 implements only the backend process shell.
+The target system is one modular backend and one Angular client. Phase 1 is the process shell. Phase 2 adds accounts, JWT access tokens, and backend role checks. Document storage and retrieval are still later work.
 
 ## Target request flow
 
@@ -20,7 +20,7 @@ FastAPI
 JSON response
 ```
 
-Retrieval must not search the whole vector collection. A viewer, editor, and admin can all call chat, but each call may only retrieve chunks from documents that principal is allowed to read.
+Retrieval must not search the whole vector collection. A viewer, editor, and admin can all call chat, but each call may only retrieve chunks from documents that principal is allowed to read. Phase 2 identifies the principal and the role. It does not yet store document grants. The retriever, when it exists, must take the allowed document ids from an authorization service rather than from the model.
 
 ## Why a modular monolith
 
@@ -33,7 +33,7 @@ See [ADR 0001](../decisions/0001-modular-monolith.md).
 | Phase | Outcome |
 | --- | --- |
 | 1 | FastAPI, settings, logging, health, tests, container |
-| Later | Authentication and RBAC |
+| 2 | Registration, JWT access tokens, backend RBAC, temporary user store |
 | Later | Documents, S3, extraction, chunking |
 | Later | Embeddings, Atlas Vector Search, Bedrock answers, citations |
 | Later | Angular client |
